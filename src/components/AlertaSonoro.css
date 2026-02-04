@@ -1,0 +1,167 @@
+.alerta-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.alerta-container {
+  background: linear-gradient(135deg, var(--cor-fundo-claro) 0%, rgba(235, 23, 23, 0.95) 100%);
+  padding: 4rem;
+  border-radius: 30px;
+  border: 5px solid;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  position: relative;
+  animation: scaleIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  max-width: 800px;
+  overflow: hidden;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.alerta-icone-grande {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8rem;
+  margin: 0 auto 2rem;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+  animation: bounce 1s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+  }
+}
+
+.alerta-conteudo {
+  margin-bottom: 2rem;
+}
+
+.alerta-titulo {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 5rem;
+  letter-spacing: 5px;
+  margin: 0 0 1rem 0;
+  animation: glow 1.5s ease-in-out infinite;
+  text-shadow: 0 0 30px currentColor;
+}
+
+@keyframes glow {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 30px currentColor;
+  }
+  50% {
+    opacity: 0.8;
+    text-shadow: 0 0 50px currentColor;
+  }
+}
+
+.alerta-subtitulo {
+  font-size: 2rem;
+  color: var(--cor-texto-suave);
+  margin: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.alerta-ondas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.onda {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 3px solid;
+  opacity: 0;
+  animation: ondaExpand 2s ease-out infinite;
+}
+
+.onda:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.onda:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes ondaExpand {
+  0% {
+    width: 200px;
+    height: 200px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 800px;
+    height: 800px;
+    opacity: 0;
+  }
+}
+
+/* Efeito de flash na tela */
+.alerta-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  animation: flash 1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes flash {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}

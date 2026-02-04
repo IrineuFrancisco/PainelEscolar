@@ -1,0 +1,89 @@
+:root {
+  --senai-red: #ff0000;
+  --senai-blue: #4c4e53;
+  --senai-white: #ffffff;
+  --senai-bg-gray: #cecece; /* Cinza de fundo da imagem */
+  --senai-text-dark: #333333;
+  --sombra-card: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--senai-bg-gray);
+  color: var(--senai-text-dark);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.logoSenai {
+  width: 200px;
+  height: auto;
+}
+
+.header {
+  background-color: var(--senai-white);
+  margin-top: 2ch;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 14vh;
+  border-bottom: 5px solid var(--senai-red);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logo-container h1 {
+  font-size: 1.2rem;
+  color: #4c4e53;
+  text-transform: uppercase;
+}
+
+.relogio-container {
+  text-align: right;
+}
+
+.hora {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #4c4e53;
+}
+
+.data {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.conteudo-principal {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 28% 72%;
+  gap: 1.5rem;
+  /* padding: 2rem; */
+}
+
+/* Estilo geral dos containers brancos */
+.card-container {
+  background: white;
+  border-radius: 4px;
+  padding: 1.5rem;
+  box-shadow: var(--sombra-card);
+  height: 100%;
+}

@@ -1,0 +1,107 @@
+.horarios-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo-secao {
+  color: #bcbcbc;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+/* Box do Próximo Evento (Escuro) */
+.proximo-horario-box {
+  background-color: #4c4e53;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.proximo-header {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.proximo-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.proximo-hora-valor {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.proximo-nome-texto {
+  font-size: 0.9rem;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+.proximo-tag {
+  background: var(--senai-red);
+  font-size: 0.6rem;
+  padding: 2px 5px;
+  display: inline-block;
+}
+
+/* Timeline vertical */
+.lista-horarios {
+  margin-top: 1rem;
+}
+
+.horario-linha {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.linha-tempo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.ponto-linha {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ccc;
+}
+
+.status-proximo .ponto-linha {
+  background-color: var(--senai-red);
+  box-shadow: 0 0 10px rgba(255,0,0,0.5);
+}
+
+.hora-texto {
+  font-weight: bold;
+  color: #888;
+  width: 50px;
+}
+
+.nome-texto {
+  color: #888;
+}
+
+.status-proximo .hora-texto, 
+.status-proximo .nome-texto {
+  color: #333;
+  font-weight: 900;
+}
+
+.check-icon {
+  color: #2ecc71;
+  margin-left: auto;
+}
