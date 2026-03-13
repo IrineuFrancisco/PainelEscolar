@@ -113,8 +113,44 @@ app.get('/api/rss', (req, res) => {
   request.end();
 });
 
+// ── /api/hora-brasilia ────────────────────────────────────────────────────────
+// Retorna a hora oficial de Brasília via worldtimeapi.org (contorna CORS do browser)
+app.get('/api/hora-brasilia', (req, res) => {
+  const options = {
+    hostname: 'worldtimeapi.org',
+    path:     '/api/timezone/America/Sao_Paulo',
+    method:   'GET',
+    headers:  {
+      'Accept':     'application/json',
+      'User-Agent': 'PainelSENAI/1.0',
+    },
+  };
+
+  const request = https.request(options, (apiRes) => {
+    let data = '';
+    apiRes.on('data', chunk => data += chunk);
+    apiRes.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        // datetime ex: "2026-03-13T10:45:30.123456-03:00"
+        res.json({ datetime: json.datetime, unixtime: json.unixtime });
+      } catch {
+        res.status(500).json({ error: 'Erro ao parsear resposta' });
+      }
+    });
+  });
+
+  request.on('error', err => {
+    console.error('[Hora Brasília]', err.message);
+    res.status(500).json({ error: err.message });
+  });
+
+  request.end();
+});
+
 app.listen(PORT, () => {
   console.log(`\n✅ Proxy SENAI rodando em http://localhost:${PORT}`);
-  console.log(`   /api/noticias  → APITube News API`);
-  console.log(`   /api/rss       → Proxy de feeds RSS\n`);
+  console.log(`   /api/noticias      → APITube News API`);
+  console.log(`   /api/rss           → Proxy de feeds RSS`);
+  console.log(`   /api/hora-brasilia → Hora oficial (worldtimeapi.org)\n`);
 });

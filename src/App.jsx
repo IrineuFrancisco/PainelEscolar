@@ -1,15 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Horarios     from './components/Horarios';
-// import Cardapio     from './components/Cardapio';
 import AlertaSonoro from './components/AlertaSonoro';
 import Noticias     from './components/Noticias';
 
-const LOGO = '/SENAI_Logo.png';
+const LOGO  = '/SENAI_Logo.png';
 
-// ── Feeds para o ticker (Canaltech) ─────────────────────────────────────────
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-const TICKER_FEED = 'https://canaltech.com.br/rss/';
+const PROXY       = 'http://localhost:3001';
+const TICKER_FEED = 'https://tecnoblog.net/feed/';
+
+// Parser RSS mínimo via DOMParser nativo do browser
+function parseRSS(xmlText) {
+  try {
+    const doc   = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const items = Array.from(doc.querySelectorAll('item'));
+    return items
+      .map(item => item.querySelector('title')?.textContent?.trim() || '')
+      .filter(Boolean);
+  } catch { return []; }
+}
 
 const HORARIOS = [
   { hora: '07:00', tipo: 'entrada', nome: 'Entrada'       },
@@ -30,40 +39,94 @@ export default function App() {
   const [tipoAlerta,    setTipoAlerta]    = useState('');
   const [nomeAlerta,    setNomeAlerta]    = useState('');
   const [tickerItens,   setTickerItens]   = useState([]);
-  const audioRef = useRef(null);
 
-  // Relógio
+  const audioRef        = useRef(null);
+  const offsetMs        = useRef(0);
+  const alarmeDisparado = useRef(new Set());
+
+  // ── 1. Sincroniza com hora oficial de Brasília ────────────────────────────
+  // worldtimeapi.org suporta CORS — chamada direta do browser, sem precisar do proxy
+  const sincronizar = async () => {
+    try {
+      const res  = await fetch('https://worldtimeapi.org/api/timezone/America/Sao_Paulo');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      // datetime: "2026-03-13T10:45:30.123456-03:00"
+      offsetMs.current = new Date(data.datetime).getTime() - Date.now();
+      console.log('[Hora Brasília] sincronizado, offset =', offsetMs.current, 'ms');
+    } catch (e) {
+      console.warn('[Hora Brasília] usando hora local:', e.message);
+    }
+  };
+
   useEffect(() => {
-    const id = setInterval(() => setHoraAtual(new Date()), 1000);
+    sincronizar();
+    const id = setInterval(sincronizar, 30 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Checa horários de alerta
+  // ── 2. Relógio com offset ─────────────────────────────────────────────────
   useEffect(() => {
-    const hms = horaAtual.toLocaleTimeString('pt-BR', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-    });
-    HORARIOS.forEach(h => {
-      if (hms === `${h.hora}:00`) dispararAlerta(h.tipo, h.nome);
-    });
+    const id = setInterval(() => {
+      setHoraAtual(new Date(Date.now() + offsetMs.current));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ── 3. Verificação de alarmes ─────────────────────────────────────────────
+  useEffect(() => {
+    const hh    = String(horaAtual.getHours()).padStart(2, '0');
+    const mm    = String(horaAtual.getMinutes()).padStart(2, '0');
+    const ss    = horaAtual.getSeconds();
+    const chave = `${hh}:${mm}`;
+
+    if (ss === 0) {
+      HORARIOS.forEach(h => {
+        if (h.hora === chave && !alarmeDisparado.current.has(chave)) {
+          alarmeDisparado.current.add(chave);
+          dispararAlerta(h.tipo, h.nome);
+          setTimeout(() => alarmeDisparado.current.delete(chave), 90_000);
+        }
+      });
+    }
   }, [horaAtual]);
 
+  // ── 4. Disparo do alerta com áudio via ref ────────────────────────────────
   const dispararAlerta = (tipo, nome) => {
     setTipoAlerta(tipo);
     setNomeAlerta(nome);
     setMostrarAlerta(true);
+
     const getSrc = AUDIO_MAP[tipo];
-    const src = getSrc ? getSrc(nome) : '/alarme.mp3';
-    new Audio(src).play().catch(() => {});
-    setTimeout(() => setMostrarAlerta(false), 10000);
+    const src    = getSrc ? getSrc(nome) : '/alarme.mp3';
+
+    if (audioRef.current) {
+      audioRef.current.src         = src;
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(err =>
+        console.warn('[Alarme] autoplay bloqueado:', err.message)
+      );
+    }
+
+    setTimeout(() => {
+      setMostrarAlerta(false);
+      if (audioRef.current) audioRef.current.pause();
+    }, 10_000);
   };
 
-  // Ticker: busca feed RSS
+  // ── 5. Ticker via proxy RSS (Tecnoblog) ──────────────────────────────────
   useEffect(() => {
-    fetch(`${RSS2JSON}${encodeURIComponent(TICKER_FEED)}&count=14`)
-      .then(r => r.json())
-      .then(d => { if (d.items) setTickerItens(d.items); })
-      .catch(() => {});
+    const buscar = async () => {
+      try {
+        const res   = await fetch(`${PROXY}/api/rss?url=${encodeURIComponent(TICKER_FEED)}`);
+        const xml   = await res.text();
+        const itens = parseRSS(xml);
+        if (itens.length) setTickerItens(itens);
+      } catch { /* mantém texto padrão */ }
+    };
+    buscar();
+    const id = setInterval(buscar, 20 * 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   const horaDisplay = horaAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -72,15 +135,13 @@ export default function App() {
   });
 
   const textoTicker = tickerItens.length
-    ? tickerItens.map(n => `◆  ${n.title}`).join('          ')
+    ? tickerItens.map(t => `◆  ${t}`).join('          ')
     : '◆  Carregando notícias de tecnologia…';
 
   return (
     <div className="app">
-      {/* Fundo decorativo */}
       <div className="app-grid-bg" aria-hidden="true" />
 
-      {/* ── HEADER ── */}
       <header className="header">
         <div className="header-logo-area">
           <img src={LOGO} alt="SENAI" className="header-logo" />
@@ -90,14 +151,12 @@ export default function App() {
             <p>SENAI-SP · Serviço Nacional de Aprendizagem Industrial</p>
           </div>
         </div>
-
         <div className="header-clock">
           <div className="clock-time">{horaDisplay}</div>
           <div className="clock-date">{dataDisplay}</div>
         </div>
       </header>
 
-      {/* ── TICKER ── */}
       <div className="ticker">
         <div className="ticker-badge">
           <span className="ticker-badge-dot" />
@@ -110,29 +169,17 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── ALERTA SONORO ── */}
-      <AlertaSonoro
-        mostrar={mostrarAlerta}
-        tipo={tipoAlerta}
-        nome={nomeAlerta}
-      />
+      <AlertaSonoro mostrar={mostrarAlerta} tipo={tipoAlerta} nome={nomeAlerta} />
 
-      {/* ── LAYOUT PRINCIPAL ── */}
       <main className="main">
         <aside className="col-horarios">
           <Horarios horarios={HORARIOS} horaAtual={horaAtual} />
         </aside>
-
-        {/* <section className="col-cardapio">
-          <Cardapio />
-        </section> */}
-
         <section className="col-noticias">
           <Noticias />
         </section>
       </main>
 
-      {/* ── FOOTER ── */}
       <footer className="footer">
         <span>© 2026 SENAI-SP</span>
         <span className="footer-diamond">◆</span>
@@ -141,7 +188,8 @@ export default function App() {
         <span>Painel Digital v3.0</span>
       </footer>
 
-      <audio ref={audioRef} src="/alarme.mp3" preload="auto" />
+      {/* Elemento persistente no DOM — necessário para autoplay do alarme funcionar */}
+      <audio ref={audioRef} preload="auto" />
     </div>
   );
 }
