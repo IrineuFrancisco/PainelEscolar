@@ -1,107 +1,182 @@
-.horarios-card {
+.horarios-wrap {
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
+  gap: 0;
+  height: 100%;
 }
 
-.titulo-secao {
-  color: #bcbcbc;
-  font-weight: bold;
+/* Cabeçalho da seção */
+.horarios-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.horarios-header-icon {
+  font-size: 30px;
+}
+
+.horarios-header-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+  color: var(--accent);
 }
 
-/* Box do Próximo Evento (Escuro) */
-.proximo-horario-box {
-  background-color: #4c4e53;
-  color: white;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 2rem;
-  position: relative;
+/* Box próximo evento */
+.proximo-box {
+  background: linear-gradient(135deg, rgba(0,200,255,0.1) 0%, rgba(0,200,255,0.04) 100%);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
-.proximo-header {
-  font-size: 0.7rem;
+.proximo-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--accent);
   text-transform: uppercase;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  opacity: 0.8;
 }
 
-.proximo-main {
+.proximo-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.proximo-hora-valor {
-  font-size: 2.5rem;
+.proximo-icone {
+  font-size: 22px;
+}
+
+.proximo-hora {
+  font-family: var(--font-display);
+  font-size: 35px;
   font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.proximo-nome-texto {
-  font-size: 0.9rem;
-  font-weight: bold;
-  line-height: 1.1;
+.proximo-nome {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
 }
 
-.proximo-tag {
-  background: var(--senai-red);
-  font-size: 0.6rem;
-  padding: 2px 5px;
-  display: inline-block;
-}
-
-/* Timeline vertical */
-.lista-horarios {
-  margin-top: 1rem;
-}
-
-.horario-linha {
+/* Timeline */
+.timeline {
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  gap: 0;
   position: relative;
 }
 
-.linha-tempo {
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 4px;
+  position: relative;
+  transition: background 0.2s;
+  border-radius: var(--r-sm);
+}
+
+.timeline-item:hover {
+  background: var(--surface);
+}
+
+/* linha conectora */
+.timeline-line-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  flex-shrink: 0;
+  width: 12px;
+  padding-top: 4px;
 }
 
-.ponto-linha {
+.timeline-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #ccc;
+  border: 2px solid var(--border2);
+  background: var(--bg2);
+  flex-shrink: 0;
+  transition: all 0.3s;
 }
 
-.status-proximo .ponto-linha {
-  background-color: var(--senai-red);
-  box-shadow: 0 0 10px rgba(255,0,0,0.5);
+.timeline-item.passou .timeline-dot {
+  background: var(--green);
+  border-color: var(--green);
 }
 
-.hora-texto {
-  font-weight: bold;
-  color: #888;
-  width: 50px;
+.timeline-item.proximo .timeline-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: blink 1.4s ease-in-out infinite;
 }
 
-.nome-texto {
-  color: #888;
+.timeline-connector {
+  width: 1px;
+  flex: 1;
+  min-height: 20px;
+  background: var(--border);
+  margin: 2px 0;
 }
 
-.status-proximo .hora-texto, 
-.status-proximo .nome-texto {
-  color: #333;
-  font-weight: 900;
+.timeline-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.check-icon {
-  color: #2ecc71;
-  margin-left: auto;
+.timeline-hora {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.timeline-item.proximo .timeline-hora {
+  color: var(--accent);
+}
+
+.timeline-item.passou .timeline-hora {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(224,240,255,0.2);
+}
+
+.timeline-nome {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-top: 1px;
+  transition: color 0.3s;
+}
+
+.timeline-item.proximo .timeline-nome {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.timeline-check {
+  font-size: 20px;
+  color: var(--green);
+  margin-top: 3px;
+  flex-shrink: 0;
 }

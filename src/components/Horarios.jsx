@@ -1,75 +1,64 @@
 import React from 'react';
 import './Horarios.css';
 
+const ICONES = {
+  entrada: '🔔',
+  cafe:    '☕',
+  almoco:  '🍽️',
+  saida:   '🚪',
+};
+
 function Horarios({ horarios, horaAtual }) {
-  const obterProximoHorario = () => {
-    const horaAtualMinutos = horaAtual.getHours() * 60 + horaAtual.getMinutes();
-    
-    for (let horario of horarios) {
-      const [hora, minuto] = horario.hora.split(':').map(Number);
-      const horarioMinutos = hora * 60 + minuto;
-      
-      if (horarioMinutos > horaAtualMinutos) {
-        return horario;
-      }
-    }
-    return horarios[0]; 
+  const toMin = (h) => {
+    const [hh, mm] = h.split(':').map(Number);
+    return hh * 60 + mm;
   };
 
-  const proximoHorario = obterProximoHorario();
+  const agoraMin = horaAtual.getHours() * 60 + horaAtual.getMinutes();
 
-  const getIcone = (tipo) => {
-    const icones = {
-      'entrada': '🔔',
-      'cafe': '☕',
-      'almoco': '🍽️',
-      'saida': '🚪'
-    };
-    return icones[tipo] || '⏰';
+  const proximo = horarios.find(h => toMin(h.hora) > agoraMin) || horarios[0];
+
+  const getStatus = (h) => {
+    const m = toMin(h.hora);
+    if (m < agoraMin)  return 'passou';
+    if (h === proximo) return 'proximo';
+    return '';
   };
 
   return (
-    <div className="card horarios-card">
-      <h2 className="card-titulo">
-        <span className="card-icone">⏰</span>
-        Programação
-      </h2>
-      
-      {/* Box de Próximo Evento - Destaque em Azul SENAI */}
-      <div className="proximo-horario-box">
-        <div className="proximo-header">PRÓXIMO EVENTO</div>
-        <div className="proximo-main">
-          <span className="proximo-hora-valor">{proximoHorario.hora}</span>
-          <div className="proximo-detalhes">
-            <span className="proximo-nome-texto">{proximoHorario.nome}</span>
-            <span className="proximo-tag">AGORA</span>
+    <div className="horarios-wrap">
+      <div className="horarios-header">
+        <span className="horarios-header-icon">⏱</span>
+        <span className="horarios-header-title">Programação</span>
+      </div>
+
+      {/* Próximo evento */}
+      <div className="proximo-box">
+        <div className="proximo-label">Próximo evento</div>
+        <div className="proximo-row">
+          <span className="proximo-icone">{ICONES[proximo.tipo] || '⏰'}</span>
+          <div>
+            <div className="proximo-hora">{proximo.hora}</div>
+            <div className="proximo-nome">{proximo.nome}</div>
           </div>
         </div>
       </div>
 
-      <div className="lista-horarios">
-        {horarios.map((horario, index) => {
-          const [hora, minuto] = horario.hora.split(':').map(Number);
-          const horarioMinutos = hora * 60 + minuto;
-          const horaAtualMinutos = horaAtual.getHours() * 60 + horaAtual.getMinutes();
-          const passou = horarioMinutos <= horaAtualMinutos;
-          const eOProximo = proximoHorario === horario;
-
+      {/* Timeline */}
+      <div className="timeline">
+        {horarios.map((h, i) => {
+          const status = getStatus(h);
           return (
-            <div 
-              key={index} 
-              className={`horario-linha ${passou ? 'status-passou' : ''} ${eOProximo ? 'status-proximo' : ''}`}
-            >
-              <div className="linha-tempo">
-                <div className="ponto-linha"></div>
-                {index !== horarios.length - 1 && <div className="conector-linha"></div>}
+            <div key={i} className={`timeline-item ${status}`}>
+              <div className="timeline-line-wrap">
+                <div className="timeline-dot" />
+                {i < horarios.length - 1 && <div className="timeline-connector" />}
               </div>
-              
-              <div className="horario-conteudo">
-                <span className="hora-texto">{horario.hora}</span>
-                <span className="nome-texto">{horario.nome}</span>
-                {passou && <span className="check-icon">✓</span>}
+              <div className="timeline-info">
+                <div className="timeline-hora">{h.hora}</div>
+                <div className="timeline-nome">{h.nome}</div>
               </div>
+              {status === 'passou' && <span className="timeline-check">✓</span>}
             </div>
           );
         })}

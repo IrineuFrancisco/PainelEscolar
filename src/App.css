@@ -1,89 +1,231 @@
-:root {
-  --senai-red: #ff0000;
-  --senai-blue: #4c4e53;
-  --senai-white: #ffffff;
-  --senai-bg-gray: #cecece; /* Cinza de fundo da imagem */
-  --senai-text-dark: #333333;
-  --sombra-card: 0 4px 10px rgba(0, 0, 0, 0.15);
+/* ── KEYFRAMES ─────────────────────────────────────────────────────────────── */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--accent-glow); }
+  50%       { box-shadow: 0 0 22px var(--accent-glow); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: var(--senai-bg-gray);
-  color: var(--senai-text-dark);
+/* ── ROOT ──────────────────────────────────────────────────────────────────── */
+.app {
   height: 100vh;
-  overflow: hidden;
-}
-
-.App {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
 }
 
-.logoSenai {
-  width: 200px;
-  height: auto;
+/* Grid decorativo */
+.app-grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .6;
 }
 
+/* ── HEADER ────────────────────────────────────────────────────────────────── */
 .header {
-  background-color: var(--senai-white);
-  margin-top: 2ch;
-  padding: 0 2rem;
+  position: relative;
+  z-index: 30;
+  flex-shrink: 0;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  height: 14vh;
-  border-bottom: 5px solid var(--senai-red);
+  padding: 0 28px;
+  height: 100px;
+  background: rgba(5, 9, 15, 0.97);
+  border-bottom: 1px solid var(--border2);
+  backdrop-filter: blur(20px);
 }
 
-.logo-container {
+.header-logo-area {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 18px;
 }
 
-.logo-container h1 {
-  font-size: 1.2rem;
-  color: #4c4e53;
+.header-logo {
+  height: 55px;
+  object-fit: contain;
+}
+
+.header-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border2);
+}
+
+.header-titles h1 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--text);
+  line-height: 1;
 }
 
-.relogio-container {
+.header-titles p {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+
+.header-clock {
   text-align: right;
 }
 
-.hora {
-  font-size: 3.5rem;
+.clock-time {
+  font-family: var(--font-display);
+  font-size: 60px;
   font-weight: 900;
-  color: #4c4e53;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 32px var(--accent-glow);
 }
 
-.data {
-  font-size: 0.8rem;
-  color: #888;
-  text-transform: uppercase;
+.clock-date {
+  font-size: 20px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
 }
 
-.conteudo-principal {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 28% 72%;
-  gap: 1.5rem;
-  /* padding: 2rem; */
+/* ── TICKER ────────────────────────────────────────────────────────────────── */
+.ticker {
+  position: relative;
+  z-index: 25;
+  flex-shrink: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: rgba(0, 200, 255, 0.05);
+  border-bottom: 1px solid var(--border);
 }
 
-/* Estilo geral dos containers brancos */
-.card-container {
-  background: white;
-  border-radius: 4px;
-  padding: 1.5rem;
-  box-shadow: var(--sombra-card);
+.ticker-badge {
+  flex-shrink: 0;
   height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 16px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.ticker-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg);
+  animation: blink 1.1s ease-in-out infinite;
+  display: inline-block;
+}
+
+.ticker-track {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-scroll 100s linear infinite;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.025em;
+  padding-left: 24px;
+}
+
+/* ── MAIN LAYOUT ───────────────────────────────────────────────────────────── */
+.main {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.col-horarios {
+  /* Ocupa exatamente 25% da largura da tela */
+  flex: 0 0 25%; 
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(255, 255, 255, 0.02); /* Opcional: leve destaque visual */
+}
+
+/* .col-cardapio {
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+} */
+
+.col-noticias {
+  /* Ocupa o restante do espaço (75%) */
+  flex: 0 0 75%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── FOOTER ────────────────────────────────────────────────────────────────── */
+.footer {
+  position: relative;
+  z-index: 30;
+  flex-shrink: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(5, 9, 15, 0.98);
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.07em;
+}
+
+.footer-diamond {
+  color: var(--accent);
+  font-size: 5px;
+  opacity: 0.4;
 }

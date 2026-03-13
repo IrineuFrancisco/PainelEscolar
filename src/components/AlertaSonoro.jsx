@@ -1,47 +1,34 @@
 import React from 'react';
 import './AlertaSonoro.css';
 
+const CONFIG = {
+  entrada: { icone: '🔔', cor: '#00E5A0', label: 'Entrada'  },
+  cafe:    { icone: '☕', cor: '#FFD23F', label: 'Café'     },
+  almoco:  { icone: '🍽️', cor: '#FF6B35', label: 'Almoço'  },
+  saida:   { icone: '👋', cor: '#FF3B5C', label: 'Saída'    },
+};
+
 function AlertaSonoro({ mostrar, tipo, nome }) {
   if (!mostrar) return null;
 
-  const getIcone = (tipo) => {
-    const icones = {
-      'entrada': '🔔',
-      'cafe': '☕',
-      'almoco': '🍽️',
-      'saida': '👋'
-    };
-    return icones[tipo] || '⏰';
-  };
-
-  const getCor = (tipo) => {
-    const cores = {
-      'entrada': '#06D6A0',
-      'cafe': '#FEC601',
-      'almoco': '#FF6B35',
-      'saida': '#EF476F'
-    };
-    return cores[tipo] || '#118AB2';
-  };
+  const cfg = CONFIG[tipo] || { icone: '⏰', cor: '#00C8FF', label: nome };
 
   return (
     <div className="alerta-overlay">
-      <div className="alerta-container" style={{ borderColor: getCor(tipo) }}>
-        <div className="alerta-icone-grande" style={{ backgroundColor: getCor(tipo) }}>
-          {getIcone(tipo)}
-        </div>
-        
-        <div className="alerta-conteudo">
-          <h1 className="alerta-titulo" style={{ color: getCor(tipo) }}>
-            {nome}
-          </h1>
-          <p className="alerta-subtitulo">É hora de {nome.toLowerCase()}!</p>
+      <div className="alerta-container" style={{ borderColor: cfg.cor }}>
+        <div className="alerta-icone" style={{ background: cfg.cor }}>
+          {cfg.icone}
         </div>
 
+        <h1 className="alerta-titulo" style={{ color: cfg.cor }}>
+          {nome || cfg.label}
+        </h1>
+        <p className="alerta-sub">É hora de {(nome || cfg.label).toLowerCase()}!</p>
+
         <div className="alerta-ondas">
-          <div className="onda" style={{ borderColor: getCor(tipo) }}></div>
-          <div className="onda" style={{ borderColor: getCor(tipo) }}></div>
-          <div className="onda" style={{ borderColor: getCor(tipo) }}></div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="onda" style={{ borderColor: cfg.cor }} />
+          ))}
         </div>
       </div>
     </div>
