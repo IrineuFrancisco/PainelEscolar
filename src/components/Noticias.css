@@ -14,7 +14,7 @@
   justify-content: space-between;
   padding: 10px 18px;
   border-bottom: 1px solid var(--border);
-  background: rgba(0,200,255,0.02);
+  background: rgba(0, 200, 255, 0.02);
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -25,7 +25,9 @@
   gap: 8px;
 }
 
-.noticias-header-icon { font-size: 14px; }
+.noticias-header-icon {
+  font-size: 14px;
+}
 
 .noticias-header-title {
   font-family: var(--font-display);
@@ -144,7 +146,8 @@
 .noticias-corpo {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 28%;
+  /* Dá mais espaço para o cardápio e fixa o tamanho da lista */
   overflow: hidden;
   min-height: 0;
 }
@@ -246,7 +249,7 @@
   height: 5px;
   border-radius: 3px;
   border: none;
-  background: rgba(0,200,255,0.2);
+  background: rgba(0, 200, 255, 0.2);
   cursor: pointer;
   padding: 0;
   transition: width 0.3s, background 0.3s;
@@ -269,7 +272,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.025);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
   cursor: pointer;
   transition: background 0.15s;
   border-left: 3px solid transparent;
@@ -280,7 +283,7 @@
 }
 
 .lista-item.ativo {
-  background: rgba(0,200,255,0.06);
+  background: rgba(0, 200, 255, 0.06);
   border-left-color: var(--accent);
 }
 
@@ -346,4 +349,102 @@
   border-radius: var(--r-sm);
   opacity: 0.65;
   margin-top: 1px;
+}
+
+/* ── AVISO MODE (LAYOUT AGRADÁVEL E PREMIUM) ─────────────────────────────── */
+.card-destaque.aviso-mode {
+  background: linear-gradient(135deg, rgba(20, 25, 32, 0.95), rgba(8, 10, 14, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 4px solid var(--aviso-cor);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: clamp(20px, 4vh, 40px);
+  /* Reduzido em telas baixas */
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-destaque.aviso-mode::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 0%, var(--aviso-cor) 0%, transparent 50%);
+  opacity: 0.15;
+  pointer-events: none;
+  animation: bg-pulse-glow 6s ease-in-out infinite alternate;
+}
+
+@keyframes bg-pulse-glow {
+  0% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+
+  100% {
+    transform: scale(1.05);
+    opacity: 0.2;
+  }
+}
+
+.card-destaque.aviso-mode .card-destaque-top {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  left: auto;
+  margin: 0;
+  z-index: 2;
+}
+
+.aviso-main-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  z-index: 2;
+  margin-bottom: clamp(12px, 2vh, 24px);
+}
+
+.aviso-icone-wrap {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.02);
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.card-destaque.aviso-mode .aviso-icone {
+  font-size: 24px;
+  filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.4));
+  line-height: 1;
+}
+
+.card-destaque.aviso-mode .card-titulo {
+  font-size: clamp(20px, 3.5vh, 28px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(to bottom, #ffffff, #cccccc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0;
+}
+
+.card-destaque.aviso-mode .card-desc {
+  font-size: clamp(15px, 5vh, 40px);
+  line-height: 1.5;
+  color: #f0f0f0;
+  font-weight: 600;
+  -webkit-line-clamp: unset;
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  z-index: 2;
+  flex: 1;
+  overflow-y: auto;
 }

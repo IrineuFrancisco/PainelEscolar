@@ -3,9 +3,9 @@ import './Horarios.css';
 
 const ICONES = {
   entrada: '🔔',
-  cafe:    '☕',
-  almoco:  '🍽️',
-  saida:   '🚪',
+  cafe: '☕',
+  almoco: '🍽️',
+  saida: '🚪',
 };
 
 function Horarios({ horarios, horaAtual }) {
@@ -20,17 +20,17 @@ function Horarios({ horarios, horaAtual }) {
 
   const getStatus = (h) => {
     const m = toMin(h.hora);
-    if (m < agoraMin)  return 'passou';
+    if (m < agoraMin) return 'passou';
     if (h === proximo) return 'proximo';
     return '';
   };
 
   return (
     <div className="horarios-wrap">
-      <div className="horarios-header">
+      {/* <div className="horarios-header">
         <span className="horarios-header-icon">⏱</span>
         <span className="horarios-header-title">Programação</span>
-      </div>
+      </div> */}
 
       {/* Próximo evento */}
       <div className="proximo-box">

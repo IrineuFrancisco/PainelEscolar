@@ -4,12 +4,17 @@ import Horarios     from './components/Horarios';
 import AlertaSonoro from './components/AlertaSonoro';
 import Noticias     from './components/Noticias';
 
-const LOGO  = '/SENAI_Logo.png';
+const LOGO = '/SENAI_Logo.png';
 
-const PROXY       = 'http://localhost:3001';
+const getProxyURL = () => {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost'
+    ? 'http://localhost:3001'
+    : `http://${hostname}:3001`;
+};
+
 const TICKER_FEED = 'https://tecnoblog.net/feed/';
 
-// Parser RSS mínimo via DOMParser nativo do browser
 function parseRSS(xmlText) {
   try {
     const doc   = new DOMParser().parseFromString(xmlText, 'application/xml');
@@ -45,15 +50,13 @@ export default function App() {
   const alarmeDisparado = useRef(new Set());
 
   // ── 1. Sincroniza com hora oficial de Brasília ────────────────────────────
-  // worldtimeapi.org suporta CORS — chamada direta do browser, sem precisar do proxy
   const sincronizar = async () => {
     try {
-      const res  = await fetch('https://worldtimeapi.org/api/timezone/America/Sao_Paulo');
+      const PROXY = getProxyURL();
+      const res = await fetch(`${PROXY}/api/hora-brasilia`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      // datetime: "2026-03-13T10:45:30.123456-03:00"
       offsetMs.current = new Date(data.datetime).getTime() - Date.now();
-      console.log('[Hora Brasília] sincronizado, offset =', offsetMs.current, 'ms');
     } catch (e) {
       console.warn('[Hora Brasília] usando hora local:', e.message);
     }
@@ -73,7 +76,7 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // ── 3. Verificação de alarmes ─────────────────────────────────────────────
+  // ── 4. Verificação de alarmes ─────────────────────────────────────────────
   useEffect(() => {
     const hh    = String(horaAtual.getHours()).padStart(2, '0');
     const mm    = String(horaAtual.getMinutes()).padStart(2, '0');
@@ -91,18 +94,17 @@ export default function App() {
     }
   }, [horaAtual]);
 
-  // ── 4. Disparo do alerta com áudio via ref ────────────────────────────────
+  // ── 5. Disparo do alerta ──────────────────────────────────────────────────
   const dispararAlerta = (tipo, nome) => {
     setTipoAlerta(tipo);
     setNomeAlerta(nome);
     setMostrarAlerta(true);
 
     const getSrc = AUDIO_MAP[tipo];
-    const src    = getSrc ? getSrc(nome) : '/alarme.mp3';
+    const src    = getSrc ? getSrc(nome) : '/alarme1.mp3';
 
     if (audioRef.current) {
-      audioRef.current.src         = src;
-      audioRef.current.currentTime = 0;
+      audioRef.current.src = src;
       audioRef.current.play().catch(err =>
         console.warn('[Alarme] autoplay bloqueado:', err.message)
       );
@@ -114,15 +116,19 @@ export default function App() {
     }, 10_000);
   };
 
-  // ── 5. Ticker via proxy RSS (Tecnoblog) ──────────────────────────────────
+  // ── 6. Ticker RSS ─────────────────────────────────────────────────────────
   useEffect(() => {
     const buscar = async () => {
       try {
-        const res   = await fetch(`${PROXY}/api/rss?url=${encodeURIComponent(TICKER_FEED)}`);
-        const xml   = await res.text();
+        const PROXY = getProxyURL();
+        const res = await fetch(`${PROXY}/api/rss?url=${encodeURIComponent(TICKER_FEED)}`);
+        if (!res.ok) throw new Error('Falha no proxy');
+        const xml = await res.text();
         const itens = parseRSS(xml);
         if (itens.length) setTickerItens(itens);
-      } catch { /* mantém texto padrão */ }
+      } catch (err) {
+        console.error('[Ticker] Erro:', err.message);
+      }
     };
     buscar();
     const id = setInterval(buscar, 20 * 60 * 1000);
@@ -180,6 +186,8 @@ export default function App() {
         </section>
       </main>
 
+      {/* Aviso de áudio removido para o Fully Kiosk Browser */}
+
       <footer className="footer">
         <span>© 2026 SENAI-SP</span>
         <span className="footer-diamond">◆</span>
@@ -188,7 +196,6 @@ export default function App() {
         <span>Painel Digital v3.0</span>
       </footer>
 
-      {/* Elemento persistente no DOM — necessário para autoplay do alarme funcionar */}
       <audio ref={audioRef} preload="auto" />
     </div>
   );
