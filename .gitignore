@@ -7,7 +7,7 @@
 /coverage
 
 # Produção
-/build
+# /build (Permite enviar o build compilado direto para o GitHub)
 
 # Diversos
 .DS_Store
