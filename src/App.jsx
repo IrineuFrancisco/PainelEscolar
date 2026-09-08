@@ -7,10 +7,10 @@ import Noticias     from './components/Noticias';
 const LOGO = '/SENAI_Logo.png';
 
 const getProxyURL = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost'
-    ? 'http://localhost:3001'
-    : `http://${hostname}:3001`;
+  if (window.location.hostname === 'localhost' && window.location.port === '3000') {
+    return 'http://localhost:3001';
+  }
+  return window.location.origin;
 };
 
 const TICKER_FEED = 'https://tecnoblog.net/feed/';

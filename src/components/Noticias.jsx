@@ -3,10 +3,10 @@ import './Noticias.css';
 
 // ✅ DETECTA AUTOMATICAMENTE O PROXY
 const getProxyURL = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' 
-    ? 'http://localhost:3001'
-    : `http://${hostname}:3001`;
+  if (window.location.hostname === 'localhost' && window.location.port === '3000') {
+    return 'http://localhost:3001';
+  }
+  return window.location.origin;
 };
 
 const CATEGORIAS = [
@@ -20,11 +20,16 @@ const CATEGORIAS = [
 function formatMediaUrl(url) {
   if (!url) return '';
   url = url.trim();
+  const PROXY = getProxyURL();
   if (url.indexOf('drive.google.com') !== -1 || url.indexOf('googleusercontent.com') !== -1) {
     const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
-      return 'https://lh3.googleusercontent.com/d/' + match[1];
+      const googleUrl = 'https://lh3.googleusercontent.com/d/' + match[1];
+      return `${PROXY}/api/image-proxy?url=${encodeURIComponent(googleUrl)}`;
     }
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return `${PROXY}/api/image-proxy?url=${encodeURIComponent(url)}`;
   }
   return url;
 }
