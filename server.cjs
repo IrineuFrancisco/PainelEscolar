@@ -318,15 +318,20 @@ function getLocalIPs() {
   return ips;
 }
 
-app.listen(PORT, '0.0.0.0', () => {
-  const localIPs = getLocalIPs();
-  console.log(`\n✅ Proxy SENAI rodando!`);
-  console.log(`   Local:   http://localhost:${PORT}`);
-  localIPs.forEach(ip => console.log(`   Rede:    http://${ip}:${PORT}`));
-  console.log(`\n📡 Rotas:`);
-  console.log(`   /api/noticias      → APITube (Cache 5m)`);
-  console.log(`   /api/gnews         → GNews (Cache 5m)`);
-  console.log(`   /api/get-avisos    → Supabase Cache`);
-  console.log(`   /api/rss           → RSS proxy (Auto-redirect)`);
-  console.log(`   /api/hora-brasilia → Hora oficial\n`);
+const PORTS = Array.from(new Set([80, 8103, Number(process.env.PORT || 3001)]));
+
+PORTS.forEach(port => {
+  const server = app.listen(port, '0.0.0.0', () => {
+    const localIPs = getLocalIPs();
+    console.log(`\n✅ Proxy SENAI rodando na porta ${port}!`);
+    localIPs.forEach(ip => console.log(`   Rede:    http://${ip}:${port}`));
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[Aviso] Porta ${port} já está em uso por outro processo.`);
+    } else {
+      console.error(`[Erro] Porta ${port}:`, err.message);
+    }
+  });
 });
