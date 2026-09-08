@@ -12,7 +12,7 @@ const os = require('os');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 const APITUBE_KEY = 'api_live_HwLpYGTKC0ZwiNhK2C0mbb6iPUdNKB70qFJDggtEDdWIte';
 const GNEWS_KEY = '882ae3c30eaafdc8c011a2605ce82408';
@@ -273,7 +273,20 @@ app.get('/api/image-proxy', async (req, res) => {
 });
 
 // ── /api/hora-brasilia ────────────────────────────────────────────────────────
-app.get('/api/hora-brasilia', (req, res) => {
+app.get('/api/hora-brasilia', async (req, res) => {
+  try {
+    const response = await fetchUrl('http://worldtimeapi.org/api/timezone/America/Sao_Paulo');
+    if (response.statusCode === 200) {
+      const data = JSON.parse(response.data);
+      return res.json({
+        datetime: data.datetime,
+        unixtime: data.unixtime
+      });
+    }
+  } catch (err) {
+    console.warn('[Hora Brasília] Erro ao buscar da internet, usando fallback local:', err.message);
+  }
+
   try {
     const now = new Date();
     res.json({

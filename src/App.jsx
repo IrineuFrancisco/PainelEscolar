@@ -135,9 +135,16 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  const horaDisplay = horaAtual.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const horaDisplay = horaAtual.toLocaleTimeString('pt-BR', { 
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
   const dataDisplay = horaAtual.toLocaleDateString('pt-BR', {
-    weekday: 'long', day: 'numeric', month: 'long',
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'long', 
+    day: 'numeric', 
+    month: 'long',
   });
 
   const textoTicker = tickerItens.length

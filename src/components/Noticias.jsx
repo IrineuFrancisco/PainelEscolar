@@ -17,6 +17,28 @@ const CATEGORIAS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+function formatMediaUrl(url) {
+  if (!url) return '';
+  url = url.trim();
+  if (url.indexOf('drive.google.com') !== -1 || url.indexOf('googleusercontent.com') !== -1) {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return 'https://lh3.googleusercontent.com/d/' + match[1];
+    }
+  }
+  return url;
+}
+
+function getYouTubeEmbedUrl(url) {
+  if (!url) return '';
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  const id = (match && match[1]) ? match[1] : null;
+  if (id) {
+    return 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + id + '&enablejsapi=1';
+  }
+  return url;
+}
+
 function tempoRelativo(dateStr) {
   if (!dateStr) return '';
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
@@ -79,20 +101,61 @@ function useNoticias(catIdx) {
               return true; // Mantém os outros avisos/lembretes
             });
 
-            setItems(
-              avisosFiltrados.map(a => ({
+            const parsedAvisos = avisosFiltrados.map(a => {
+              const imgUrl = formatMediaUrl(a.imagem_url || a.thumbnail || '');
+              let vidUrl = formatMediaUrl(a.video_url || '');
+              let tipoMidia = a.tipo_midia || '';
+
+              if (!tipoMidia || tipoMidia === 'nenhum') {
+                if (vidUrl) {
+                  if (vidUrl.includes('youtube.com') || vidUrl.includes('youtu.be')) {
+                    tipoMidia = 'youtube';
+                  } else {
+                    tipoMidia = 'video';
+                  }
+                } else if (imgUrl) {
+                  if (imgUrl.includes('youtube.com') || imgUrl.includes('youtu.be')) {
+                    tipoMidia = 'youtube';
+                    vidUrl = imgUrl;
+                  } else if (imgUrl.match(/\.(mp4|webm|ogv)$/i)) {
+                    tipoMidia = 'video';
+                    vidUrl = imgUrl;
+                  } else {
+                    tipoMidia = 'imagem';
+                  }
+                } else {
+                  tipoMidia = 'nenhum';
+                }
+              } else if (tipoMidia === 'imagem') {
+                if (imgUrl && (imgUrl.includes('youtube.com') || imgUrl.includes('youtu.be'))) {
+                  tipoMidia = 'youtube';
+                  vidUrl = imgUrl;
+                }
+              } else if (tipoMidia === 'video') {
+                if (vidUrl && (vidUrl.includes('youtube.com') || vidUrl.includes('youtu.be'))) {
+                  tipoMidia = 'youtube';
+                }
+              }
+
+              return {
                 isAviso: true,
                 title: a.titulo || 'Aviso',
                 source: (a.tipo || 'Escola').toUpperCase(),
                 url: '#',
                 pubDate: a.updated_at || a.created_at || new Date().toISOString(),
-                thumbnail: '',
+                thumbnail: imgUrl,
+                imagemUrl: imgUrl,
+                videoUrl: vidUrl,
+                tipoMidia: tipoMidia,
+                duracao: a.duracao ? parseInt(a.duracao, 10) : 10,
                 cor: a.cor || '#111',
                 icone: a.icone || '📢',
                 originalDesc: a.mensagem || '',
                 description: a.mensagem || '',
-              }))
-            );
+              };
+            });
+
+            setItems(parsedAvisos);
           } else if (active) {
             setErro('Nenhum aviso encontrado.');
             setItems([]);
@@ -125,12 +188,17 @@ function useNoticias(catIdx) {
               if (match) thumb = match[1];
             }
 
+            const thumbProxied = thumb ? `${PROXY}/api/image-proxy?url=${encodeURIComponent(thumb)}` : '';
+
             return {
               title: item.querySelector('title')?.textContent || 'Sem título',
               source: cat.label,
               url: item.querySelector('link')?.textContent || '#',
               pubDate: item.querySelector('pubDate')?.textContent || '',
-              thumbnail: thumb ? `${PROXY}/api/image-proxy?url=${encodeURIComponent(thumb)}` : '',
+              thumbnail: thumbProxied,
+              imagemUrl: thumbProxied,
+              tipoMidia: thumbProxied ? 'imagem' : 'nenhum',
+              duracao: 8,
               description: (item.querySelector('description')?.textContent || '').replace(/<[^>]+>/g, '').trim().slice(0, 180),
             };
           });
@@ -151,7 +219,6 @@ function useNoticias(catIdx) {
     };
 
     buscar();
-    // GNews Grátis: 100 req/dia. 30min = ~48 req/dia se ficar aberto 24h
     const id = setInterval(buscar, 30 * 60 * 1000);
     return () => { active = false; clearInterval(id); };
   }, [catIdx]);
@@ -163,15 +230,25 @@ function useNoticias(catIdx) {
 function Noticias() {
   const [catIdx, setCatIdx] = useState(0);
   const [selecionado, setSelecionado] = useState(0);
+  const [imgError, setImgError] = useState(false);
   const { items, carregando, erro } = useNoticias(catIdx);
 
-  useEffect(() => setSelecionado(0), [catIdx, items]);
+  useEffect(() => setSelecionado(0), [catIdx]);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [selecionado, catIdx]);
 
   const nextNewsRef = useRef(1);
 
   useEffect(() => {
     if (!items.length) return;
-    const id = setInterval(() => {
+    const currentItem = items[selecionado];
+    const delay = (currentItem && currentItem.duracao && currentItem.duracao > 0)
+      ? currentItem.duracao * 1000
+      : 8000;
+
+    const id = setTimeout(() => {
       setSelecionado(p => {
         // Se chegou na última notícia da aba atual
         if (p + 1 >= items.length) {
@@ -193,9 +270,9 @@ function Noticias() {
         // Senão, vai para a próxima notícia da mesma aba
         return p + 1;
       });
-    }, 8000); // Troca a cada 8 segundos
-    return () => clearInterval(id);
-  }, [items]);
+    }, delay);
+    return () => clearTimeout(id);
+  }, [items, selecionado]);
 
   const noticiaRaw = items[selecionado];
   let noticia = noticiaRaw ? { ...noticiaRaw } : null;
@@ -203,7 +280,6 @@ function Noticias() {
   // Filtro de horário para o cardápio
   if (noticia && noticia.isAviso && noticia.source === 'CARDAPIO' && noticia.originalDesc && noticia.originalDesc.includes('|')) {
     const partes = noticia.originalDesc.split('|').map(p => p.trim());
-    // Usa o offset global de tempo, se existir, para corrigir a hora da TV
     const now = window.serverTimeOffset ? new Date(Date.now() + window.serverTimeOffset) : new Date();
     const tempoAtual = now.getHours() + now.getMinutes() / 60;
     
@@ -217,15 +293,29 @@ function Noticias() {
     const parte = partes.find(p => p.toUpperCase().startsWith(filtroStr));
     if (parte) {
       noticia.description = `<span style="color:var(--aviso-cor); filter:brightness(1.5); font-weight:900; font-size:1.1em; letter-spacing:0.05em">${filtroStr}</span><br/><br/>${parte.substring(filtroStr.length).trim()}`;
+    } else {
+      noticia.description = noticia.originalDesc.replace(/\|/g, '<br/><br/>');
     }
+  } else if (noticia && noticia.isAviso && noticia.description) {
+    noticia.description = noticia.description.replace(/\|/g, '<br/><br/>');
   }
+
+  const hasMedia = !imgError && Boolean(
+    (noticia?.tipoMidia === 'imagem' && noticia?.imagemUrl) ||
+    (noticia?.tipoMidia === 'video' && noticia?.videoUrl) ||
+    (noticia?.tipoMidia === 'youtube' && noticia?.videoUrl) ||
+    (!noticia?.isAviso && noticia?.thumbnail)
+  );
+
+  const cleanDesc = (noticia?.description || '').replace(/<[^>]+>/g, '').trim();
+  const hasCaptionText = cleanDesc.length > 0 && cleanDesc.toLowerCase() !== (noticia?.title || '').toLowerCase();
 
   return (
     <div className="noticias-wrap">
       <div className="noticias-header">
         <div className="noticias-header-left">
-          <span className="noticias-header-icon">📡</span>
-          <span className="noticias-header-title">Radar de Inovação</span>
+          <span className="noticias-header-icon">📢</span>
+          <span className="noticias-header-title">Informativos Escolares</span>
           <span className="noticias-powered">RSS Feed Grátis</span>
         </div>
         <div className="feed-tabs">
@@ -260,42 +350,94 @@ function Noticias() {
           {/* Card Destaque */}
           <div className="destaque-col">
             <div
-              className={`card-destaque ${noticia?.isAviso ? 'aviso-mode' : ''}`}
+              className={`card-destaque ${noticia?.isAviso ? 'aviso-mode' : ''} ${hasMedia ? 'has-media' : ''} ${hasMedia && hasCaptionText ? 'has-caption' : ''}`}
               style={noticia?.isAviso ? {
                 '--aviso-cor': noticia.cor
-              } : (noticia?.thumbnail ? {
+              } : (noticia?.thumbnail && !hasMedia ? {
                 backgroundImage: `linear-gradient(to top, rgba(5,9,15,1) 15%, rgba(5,9,15,0.4) 100%), url(${noticia.thumbnail})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               } : { backgroundColor: '#111' })}
             >
+              {/* Midia Container (Imagens, Videos, YouTube, Banners) */}
+              <div className="card-destaque-media">
+                {noticia?.tipoMidia === 'imagem' && (noticia?.imagemUrl || noticia?.thumbnail) && !imgError ? (
+                  <img
+                    src={noticia.imagemUrl || noticia.thumbnail}
+                    alt={noticia.title || ''}
+                    className="destaque-banner-img"
+                    onError={(e) => {
+                      if (e.target.src.includes('lh3.googleusercontent.com/d/')) {
+                        const parts = e.target.src.split('/d/');
+                        if (parts[1]) {
+                          e.target.src = `https://drive.google.com/thumbnail?id=${parts[1]}&sz=w1920`;
+                          return;
+                        }
+                      }
+                      setImgError(true);
+                    }}
+                  />
+                ) : noticia?.tipoMidia === 'video' && noticia?.videoUrl ? (
+                  <video
+                    src={noticia.videoUrl}
+                    className="destaque-banner-video"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    onError={() => setImgError(true)}
+                  />
+                ) : noticia?.tipoMidia === 'youtube' && noticia?.videoUrl ? (
+                  <iframe
+                    src={getYouTubeEmbedUrl(noticia.videoUrl)}
+                    className="destaque-banner-iframe"
+                    title={noticia.title || 'Vídeo YouTube'}
+                    allow="autoplay; encrypted-media"
+                  />
+                ) : null}
+              </div>
+
+              <div className="card-destaque-overlay" />
+
               <div className="card-destaque-top">
-                <span className="card-fonte-badge" style={noticia?.isAviso ? { backgroundColor: noticia.cor } : {}}>{noticia?.source}</span>
+                <span 
+                  className="card-fonte-badge" 
+                  style={noticia?.isAviso ? { 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    color: noticia.cor || '#118AB2' 
+                  } : {}}
+                >
+                  {noticia?.isAviso 
+                    ? `${noticia.icone ? noticia.icone + ' ' : ''}${noticia.title}` 
+                    : noticia?.source}
+                </span>
                 {!noticia?.isAviso && <span className="card-tempo">{tempoRelativo(noticia?.pubDate)}</span>}
               </div>
 
               {noticia?.isAviso ? (
-                <div className="aviso-main-content">
-                  {noticia?.icone && (
-                    <div className="aviso-icone-wrap">
-                      <span className="aviso-icone">{noticia.icone}</span>
-                    </div>
-                  )}
-                  <h2 className="card-titulo">{noticia?.title}</h2>
-                </div>
+                (!hasMedia || hasCaptionText) && (
+                  <div className="aviso-main-content">
+                    {noticia?.icone && (
+                      <div className="aviso-icone-wrap">
+                        <span className="aviso-icone">{noticia.icone}</span>
+                      </div>
+                    )}
+                    <h2 className="card-titulo">{noticia?.title}</h2>
+                  </div>
+                )
               ) : (
-                <h2 className="card-titulo">
-                  {noticia?.title}
-                </h2>
+                (!hasMedia || hasCaptionText) && (
+                  <h2 className="card-titulo">
+                    {noticia?.title}
+                  </h2>
+                )
               )}
               
-              {noticia?.description && (
+              {(!hasMedia || hasCaptionText) && noticia?.description && (
                 <div 
                   className="card-desc" 
                   dangerouslySetInnerHTML={{ 
-                    __html: noticia.isAviso 
-                      ? noticia.description.replace(/\|/g, '<br/><br/>') 
-                      : noticia.description 
+                    __html: noticia.description 
                   }} 
                 />
               )}
@@ -331,7 +473,7 @@ function Noticias() {
                   </div>
                 </div>
                 {n.thumbnail && (
-                  <img src={n.thumbnail} alt="" className="lista-thumb" />
+                  <img src={n.thumbnail} alt="" className="lista-thumb" onError={(e) => { e.target.style.display = 'none'; }} />
                 )}
               </div>
             ))}
@@ -342,4 +484,4 @@ function Noticias() {
   );
 }
 
-export default Noticias;
+export default Noticias;
