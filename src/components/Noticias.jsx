@@ -17,21 +17,20 @@ const CATEGORIAS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function formatMediaUrl(url) {
+function convertDriveUrl(url) {
   if (!url) return '';
   url = url.trim();
-  const PROXY = getProxyURL();
   if (url.indexOf('drive.google.com') !== -1 || url.indexOf('googleusercontent.com') !== -1) {
     const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
-      const googleUrl = 'https://lh3.googleusercontent.com/d/' + match[1];
-      return `${PROXY}/api/image-proxy?url=${encodeURIComponent(googleUrl)}`;
+      return 'https://lh3.googleusercontent.com/d/' + match[1];
     }
   }
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return `${PROXY}/api/image-proxy?url=${encodeURIComponent(url)}`;
-  }
   return url;
+}
+
+function formatMediaUrl(url) {
+  return convertDriveUrl(url);
 }
 
 function getYouTubeEmbedUrl(url) {
@@ -372,12 +371,19 @@ function Noticias() {
                     alt={noticia.title || ''}
                     className="destaque-banner-img"
                     onError={(e) => {
-                      if (e.target.src.includes('lh3.googleusercontent.com/d/')) {
-                        const parts = e.target.src.split('/d/');
+                      const currentSrc = e.target.src;
+                      // Fallback 1: Thumbnail HD (drive.google.com/thumbnail?id=FILE_ID&sz=w1600)
+                      if (currentSrc.includes('lh3.googleusercontent.com/d/')) {
+                        const parts = currentSrc.split('/d/');
                         if (parts[1]) {
-                          e.target.src = `https://drive.google.com/thumbnail?id=${parts[1]}&sz=w1920`;
+                          e.target.src = `https://drive.google.com/thumbnail?id=${parts[1]}&sz=w1600`;
                           return;
                         }
+                      }
+                      // Fallback 2: Imagem local de emergência (/juventudes.png)
+                      if (!currentSrc.includes('/juventudes.png')) {
+                        e.target.src = '/juventudes.png';
+                        return;
                       }
                       setImgError(true);
                     }}
